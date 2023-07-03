@@ -1,5 +1,6 @@
+import { yupResolver } from '@hookform/resolvers/yup'
 import type { RegisterOptions, UseFormGetValues } from 'react-hook-form'
-
+import * as yup from 'yup'
 type Rules = { [key in 'email' | 'password' | 'confirm_password']?: RegisterOptions }
 
 export const getRules = (getValues?: UseFormGetValues<any>): Rules => ({
@@ -54,3 +55,25 @@ export const getRules = (getValues?: UseFormGetValues<any>): Rules => ({
         : undefined
   }
 })
+
+export const schema = yup.object({
+  email: yup
+    .string()
+    .required('Please enter your email')
+    .email('Invalid email format')
+    .max(160, 'Length from 5 to 160 characters')
+    .min(6, 'Length from 5 to 160 characters'),
+  password: yup
+    .string()
+    .required('Please enter your password')
+    .max(160, 'Length from 5 to 160 characters')
+    .min(6, 'Length from 5 to 160 characters'),
+  confirm_password: yup
+    .string()
+    .required('Please re-enter your password')
+    .max(160, 'Length from 5 to 160 characters')
+    .min(6, 'Length from 5 to 160 characters')
+    .oneOf([yup.ref('password')], 'Passwords must match')
+})
+
+export type Schema = yup.InferType<typeof schema>
