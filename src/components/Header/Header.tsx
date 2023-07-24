@@ -1,22 +1,71 @@
-import { Link } from 'react-router-dom'
-import Popover from '../Popover'
-import { useMutation } from '@tanstack/react-query'
-import { logout } from 'src/apis/auth.api'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useContext } from 'react'
+import { Link, createSearchParams, useNavigate } from 'react-router-dom'
+import authApi from 'src/apis/auth.api'
+import path from 'src/constants/path'
 import { AppContext } from 'src/contexts/app.context'
+import Popover from '../Popover'
+import useQueryConfig from 'src/hooks/useQueryConfig'
+import { useForm } from 'react-hook-form'
+import { Schema, schema } from 'src/utils/rules'
+import { yupResolver } from '@hookform/resolvers/yup'
+import { omit } from 'lodash'
+import { purchasesStatus } from 'src/constants/purchase'
+import purchaseApi from 'src/apis/purchase.api'
+import noproduct from '../../assets/Images/no-product.png'
+import { formatCurrency } from 'src/utils/utils'
+type FormData = Pick<Schema, 'name'>
 
+const nameSchema = schema.pick(['name'])
 export default function Header() {
-  const { setIsAuthenticated, isAuthenticated } = useContext(AppContext)
+  const queryConfig = useQueryConfig()
+  const queryClient = useQueryClient()
+  const MAX_PURCHASES = 5
+  const navigate = useNavigate()
+  const { register, handleSubmit } = useForm<FormData>({
+    defaultValues: {
+      name: ''
+    },
+    resolver: yupResolver(nameSchema)
+  })
+  const { setIsAuthenticated, isAuthenticated, setProfile, profile } = useContext(AppContext)
   const logoutMutation = useMutation({
-    mutationFn: logout,
+    mutationFn: authApi.logout,
     onSuccess: () => {
       setIsAuthenticated(false)
+      setProfile(null)
+      queryClient.removeQueries({ queryKey: ['purchases', { status: purchasesStatus.inCart }] })
     }
   })
-
   const handleLogout = () => {
     logoutMutation.mutate()
   }
+
+  const { data: purchasesInCartData } = useQuery({
+    queryKey: ['purchases', { status: purchasesStatus.inCart }],
+    queryFn: () => purchaseApi.getPurchases({ status: purchasesStatus.inCart }),
+    enabled: isAuthenticated
+  })
+
+  const purchaseInCart = purchasesInCartData?.data.data
+  const onSubmitSearch = handleSubmit((data) => {
+    const config = queryConfig.order
+      ? omit(
+          {
+            ...queryConfig,
+            name: data.name
+          },
+          ['order', 'sort_by']
+        )
+      : {
+          ...queryConfig,
+          name: data.name
+        }
+    navigate({
+      pathname: path.home,
+      search: createSearchParams(config).toString()
+    })
+  })
   return (
     <div className='bg-[linear-gradient(-180deg,#f53d2d,#f63)] pb-5 pt-2 text-white'>
       <div className='container'>
@@ -92,16 +141,16 @@ export default function Header() {
                   className='object-cover w-full h-full rounded-full'
                 />
               </div>
-              <div>duthanhduoc</div>
+              <div>{profile?.email}</div>
             </Popover>
           )}
           {!isAuthenticated && (
             <div className='flex items-center'>
-              <Link to='/register' className='mx-3 capitalize opacity-70 hover:text-white '>
+              <Link to={path.register} className='mx-3 capitalize opacity-70 hover:text-white '>
                 Đăng ký
               </Link>
               <div className='h-4 border-l-[1px] border-l-white/40'>
-                <Link to='/login' className='mx-3 capitalize opacity-70 hover:text-white '>
+                <Link to={path.login} className='mx-3 capitalize opacity-70 hover:text-white '>
                   Đăng nhập
                 </Link>
               </div>
@@ -116,13 +165,13 @@ export default function Header() {
               </g>
             </svg>
           </Link>
-          <form className='col-span-9'>
+          <form className='col-span-9' onSubmit={onSubmitSearch}>
             <div className='flex p-1 bg-white rounded-sm'>
               <input
                 type='text'
-                name='search'
                 className='flex-grow px-3 py-2 text-black bg-transparent border-none outline-none'
                 placeholder='Free Ship Đơn Từ 0Đ'
+                {...register('name')}
               />
               <button className='flex-shrink-0 px-6 py-2 rounded-sm bg-orange hover:opacity-90'>
                 <svg
@@ -146,81 +195,51 @@ export default function Header() {
             <Popover
               renderPopover={
                 <div className='relative max-w-[400px] rounded-sm border border-gray-200 bg-white text-sm shadow-md'>
-                  <div className='p-2'>
-                    <div className='text-gray-400 capitalize'>Sản phẩm mới thêm</div>
-                    <div className='mt-5'>
-                      <div className='flex mt-4'>
-                        <div className='flex-shrink-0'>
-                          <img
-                            src='https://toigingiuvedep.vn/wp-content/uploads/2022/03/hinh-nen-nguoi-nhen-chibi-cute-cho-dien-thoai.jpg'
-                            alt='Images'
-                            className='object-cover h-11 w-11'
-                          />
-                        </div>
-                        <div className='flex-grow ml-2 overflow-hidden'>
-                          <div className='truncate'>Mạnh Cường Itemm fpòdopfdjf podfjopdsjfdspo</div>
-                        </div>
-                        <div className='flex-shrink-0 ml-2'>
-                          <span className='text-orange'>200.000</span>
-                        </div>
+                  {purchaseInCart ? (
+                    <div className='p-2'>
+                      <div className='text-gray-400 capitalize'>Sản phẩm mới thêm</div>
+                      <div className='mt-5'>
+                        {purchaseInCart.slice(0, MAX_PURCHASES).map((purchases) => (
+                          <div className='flex py-2 mt-2 hover:bg-gray-100' key={purchases._id}>
+                            <div className='flex-shrink-0'>
+                              <img
+                                src={purchases.product.image}
+                                alt={purchases.product.name}
+                                className='object-cover h-11 w-11'
+                              />
+                            </div>
+                            <div className='flex-grow ml-2 overflow-hidden'>
+                              <div className='truncate'>{purchases.product.name}</div>
+                            </div>
+                            <div className='flex-shrink-0 ml-2'>
+                              <span className='text-orange'>{formatCurrency(purchases.product.price)}</span>
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                      <div className='flex mt-4'>
-                        <div className='flex-shrink-0'>
-                          <img
-                            src='https://toigingiuvedep.vn/wp-content/uploads/2022/03/hinh-nen-nguoi-nhen-chibi-cute-cho-dien-thoai.jpg'
-                            alt='Images'
-                            className='object-cover h-11 w-11'
-                          />
+                      <div className='flex items-center justify-between mt-6 cursor-pointer'>
+                        <div className='text-xs text-gray-600 capitalize'>
+                          {purchaseInCart.length > MAX_PURCHASES ? purchaseInCart.length - MAX_PURCHASES : ''} Thêm vào
+                          giỏ hàng
                         </div>
-                        <div className='flex-grow ml-2 overflow-hidden'>
-                          <div className='truncate'>Mạnh Cường Itemm fpòdopfdjf podfjopdsjfdspo</div>
-                        </div>
-                        <div className='flex-shrink-0 ml-2'>
-                          <span className='text-orange'>200.000</span>
-                        </div>
-                      </div>
-                      <div className='flex mt-4'>
-                        <div className='flex-shrink-0'>
-                          <img
-                            src='https://toigingiuvedep.vn/wp-content/uploads/2022/03/hinh-nen-nguoi-nhen-chibi-cute-cho-dien-thoai.jpg'
-                            alt='Images'
-                            className='object-cover h-11 w-11'
-                          />
-                        </div>
-                        <div className='flex-grow ml-2 overflow-hidden'>
-                          <div className='truncate'>Mạnh Cường Itemm fpòdopfdjf podfjopdsjfdspo</div>
-                        </div>
-                        <div className='flex-shrink-0 ml-2'>
-                          <span className='text-orange'>200.000</span>
-                        </div>
-                      </div>
-                      <div className='flex mt-4'>
-                        <div className='flex-shrink-0'>
-                          <img
-                            src='https://toigingiuvedep.vn/wp-content/uploads/2022/03/hinh-nen-nguoi-nhen-chibi-cute-cho-dien-thoai.jpg'
-                            alt='Images'
-                            className='object-cover h-11 w-11'
-                          />
-                        </div>
-                        <div className='flex-grow ml-2 overflow-hidden'>
-                          <div className='truncate'>Mạnh Cường Itemm fpòdopfdjf podfjopdsjfdspo</div>
-                        </div>
-                        <div className='flex-shrink-0 ml-2'>
-                          <span className='text-orange'>200.000</span>
-                        </div>
+                        <Link
+                          to={path.cart}
+                          className='px-4 py-2 text-white capitalize rounded-sm bg-orange hover:bg-opacity-90'
+                        >
+                          Xem giỏ hàng
+                        </Link>
                       </div>
                     </div>
-                    <div className='flex items-center justify-between mt-6 cursor-pointer'>
-                      <div className='text-xs text-gray-600 capitalize'>Thêm vào giỏ hàng</div>
-                      <div className='px-4 py-2 text-white capitalize rounded-sm bg-orange hover:bg-opacity-90'>
-                        Xem giỏ hàng
-                      </div>
+                  ) : (
+                    <div className='flex h-[300px] w-[300px] items-center justify-center p-2'>
+                      <img src={noproduct} alt='no product' className='w-24 h-24' />
+                      <div className='mt-3 capitalize'>Chưa có sản phẩm</div>
                     </div>
-                  </div>
+                  )}
                 </div>
               }
             >
-              <Link to='/'>
+              <Link to='/' className='relative'>
                 <svg
                   xmlns='http://www.w3.org/2000/svg'
                   fill='none'
@@ -235,6 +254,11 @@ export default function Header() {
                     d='M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z'
                   />
                 </svg>
+                {purchaseInCart && (
+                  <span className='absolute left-[17px] top-[-5px] rounded-full bg-white px-[9px] py-[1px] text-xs text-orange'>
+                    {purchaseInCart?.length}
+                  </span>
+                )}
               </Link>
             </Popover>
           </div>

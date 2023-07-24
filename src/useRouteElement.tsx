@@ -1,12 +1,15 @@
-import { Outlet, useRoutes, Navigate } from 'react-router-dom'
-import Login from './pages/Login/Login'
-import ProductList from './pages/ProductList/ProductList'
-import Register from './pages/Register/Register'
-import RegisterLayout from './layouts/RegisterLayout'
-import MainLayout from './layouts/MainLayout'
-import Profile from './pages/Profile'
+import path from 'src/constants/path'
 import { useContext } from 'react'
+import { Navigate, Outlet, useRoutes } from 'react-router-dom'
 import { AppContext } from './contexts/app.context'
+import MainLayout from './layouts/MainLayout'
+import RegisterLayout from './layouts/RegisterLayout'
+import Login from './pages/Login'
+import ProductList from './pages/ProductList'
+import Profile from './pages/Profile'
+import Register from './pages/Register'
+import ProductDetail from './pages/ProductDetail'
+import Cart from './pages/Cart'
 
 function ProtectedRoute() {
   const { isAuthenticated } = useContext(AppContext)
@@ -15,16 +18,18 @@ function ProtectedRoute() {
 
 function RejectedRoute() {
   const { isAuthenticated } = useContext(AppContext)
-  return isAuthenticated ? <Navigate to='/' /> : <Outlet />
+
+  return !isAuthenticated ? <Outlet /> : <Navigate to='/' />
 }
-export default function useRouteElement() {
-  const routeElement = useRoutes([
+
+export default function useRouteElements() {
+  const routeElements = useRoutes([
     {
       path: '',
       element: <RejectedRoute />,
       children: [
         {
-          path: 'login',
+          path: path.login,
           element: (
             <RegisterLayout>
               <Login />
@@ -32,7 +37,7 @@ export default function useRouteElement() {
           )
         },
         {
-          path: 'register',
+          path: path.register,
           element: (
             <RegisterLayout>
               <Register />
@@ -46,14 +51,30 @@ export default function useRouteElement() {
       element: <ProtectedRoute />,
       children: [
         {
-          path: '/profile',
+          path: path.profile,
           element: (
             <MainLayout>
               <Profile />
             </MainLayout>
           )
+        },
+        {
+          path: path.cart,
+          element: (
+            <MainLayout>
+              <Cart />
+            </MainLayout>
+          )
         }
       ]
+    },
+    {
+      path: path.productDetail,
+      element: (
+        <MainLayout>
+          <ProductDetail />
+        </MainLayout>
+      )
     },
     {
       path: '',
@@ -65,5 +86,5 @@ export default function useRouteElement() {
       )
     }
   ])
-  return routeElement
+  return routeElements
 }
