@@ -4,13 +4,14 @@ import HttpStatusCode from 'src/constants/httpStatusCode.enum'
 import { AuthResponse } from 'src/types/auth.type'
 import { clearLS, getAccessTokenFromLS, setAccessTokenToLS, setProfileToLS } from './auth'
 import path from 'src/constants/path'
+import config from 'src/constants/config'
 class Http {
   instance: AxiosInstance
   private accessToken: string
   constructor() {
     this.accessToken = getAccessTokenFromLS()
     this.instance = axios.create({
-      baseURL: 'https://api-ecom.duthanhduoc.com/',
+      baseURL: config.baseUrl,
       timeout: 10000,
       headers: {
         'Content-Type': 'application/json'
@@ -48,9 +49,13 @@ class Http {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const data: any | undefined = error.response?.data
 
-          const message = data.message || error.message
+          const message = data?.message || error.message
 
           toast.error(message)
+        }
+
+        if (error.response?.status === HttpStatusCode.Unauthorized) {
+          clearLS()
         }
         return Promise.reject(error)
       }

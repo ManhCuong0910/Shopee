@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import DOMPurify from 'dompurify'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import productApi from 'src/apis/product.api'
 import ProductRating from 'src/components/ProductRating'
 import QuantityController from 'src/components/QuantityController'
@@ -11,10 +11,12 @@ import Product from '../ProductList/components/Product'
 import purchaseApi from 'src/apis/purchase.api'
 import { purchasesStatus } from 'src/constants/purchase'
 import { toast } from 'react-toastify'
+import path from 'src/constants/path'
 
 export default function ProductDetail() {
   const { nameId } = useParams()
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
   const [buyCount, setBuyCount] = useState(1)
   const id = getIdFromNameId(nameId as string)
   const { data: productDetailData } = useQuery({
@@ -100,11 +102,27 @@ export default function ProductDetail() {
       }
     )
   }
+
+  const buyNow = () => {
+    addToCartMutation.mutate(
+      { product_id: product?._id as string, buy_count: buyCount },
+      {
+        onSuccess: (data) => {
+          queryClient.invalidateQueries({ queryKey: ['purchases', { status: purchasesStatus.inCart }] })
+          navigate(path.cart, {
+            state: {
+              purchaseId: data.data.data._id
+            }
+          })
+        }
+      }
+    )
+  }
   if (!product) return null
   return (
-    <div className='py-6 bg-gray-200'>
+    <div className='bg-gray-200 py-6'>
       <div className='container'>
-        <div className='p-4 bg-white shadow'>
+        <div className='bg-white p-4 shadow'>
           <div className='grid grid-cols-12 gap-9'>
             <div className='col-span-5'>
               <div
@@ -115,13 +133,13 @@ export default function ProductDetail() {
                 <img
                   src={activeImage}
                   alt={product.name}
-                  className='absolute top-0 left-0 object-cover w-full h-full bg-white'
+                  className='absolute left-0 top-0 h-full w-full bg-white object-cover'
                   ref={imageRef}
                 />
               </div>
-              <div className='relative grid grid-cols-5 gap-1 mt-4'>
+              <div className='relative mt-4 grid grid-cols-5 gap-1'>
                 <button
-                  className='absolute left-0 z-10 w-5 text-white -translate-y-1/2 top-1/2 h-9 bg-black/20'
+                  className='absolute left-0 top-1/2 z-10 h-9 w-5 -translate-y-1/2 bg-black/20 text-white'
                   onClick={prev}
                 >
                   <svg
@@ -130,7 +148,7 @@ export default function ProductDetail() {
                     viewBox='0 0 24 24'
                     strokeWidth={1.5}
                     stroke='currentColor'
-                    className='w-5 h-5'
+                    className='h-5 w-5'
                   >
                     <path strokeLinecap='round' strokeLinejoin='round' d='M15.75 19.5L8.25 12l7.5-7.5' />
                   </svg>
@@ -142,14 +160,14 @@ export default function ProductDetail() {
                       <img
                         src={img}
                         alt={product.name}
-                        className='absolute top-0 left-0 object-cover w-full h-full bg-white cursor-pointer'
+                        className='absolute left-0 top-0 h-full w-full cursor-pointer bg-white object-cover'
                       />
                       {isActive && <div className='absolute inset-0 border-2 border-orange' />}
                     </div>
                   )
                 })}
                 <button
-                  className='absolute right-0 z-10 w-5 text-white -translate-y-1/2 top-1/2 h-9 bg-black/20'
+                  className='absolute right-0 top-1/2 z-10 h-9 w-5 -translate-y-1/2 bg-black/20 text-white'
                   onClick={next}
                 >
                   <svg
@@ -158,7 +176,7 @@ export default function ProductDetail() {
                     viewBox='0 0 24 24'
                     strokeWidth={1.5}
                     stroke='currentColor'
-                    className='w-5 h-5'
+                    className='h-5 w-5'
                   >
                     <path strokeLinecap='round' strokeLinejoin='round' d='M8.25 4.5l7.5 7.5-7.5 7.5' />
                   </svg>
@@ -167,7 +185,7 @@ export default function ProductDetail() {
             </div>
             <div className='col-span-7'>
               <h1 className='text-xl font-medium uppercase'>{product.name}</h1>
-              <div className='flex items-center mt-8'>
+              <div className='mt-8 flex items-center'>
                 <div className='flex items-center'>
                   <span className='mr-1 border-b border-b-orange text-orange'>{product.rating}</span>
                   <ProductRating
@@ -182,15 +200,15 @@ export default function ProductDetail() {
                   <span className='ml-1 text-gray-500'>Đã bán</span>
                 </div>
               </div>
-              <div className='flex items-center px-5 py-4 mt-8 bg-gray-50'>
+              <div className='mt-8 flex items-center bg-gray-50 px-5 py-4'>
                 <div className='text-gray-500 line-through'>₫{formatCurrency(product.price_before_discount)}</div>
                 <div className='ml-3 text-3xl font-medium text-orange'>₫{formatCurrency(product.price)}</div>
                 <div className='ml-4 rounded-sm bg-orange px-1 py-[2px] text-xs font-semibold uppercase text-white'>
                   {rateSale(product.price_before_discount, product.price)} giảm
                 </div>
               </div>
-              <div className='flex items-center mt-8'>
-                <div className='mr-4 text-gray-500 capitalize'>Số lượng</div>
+              <div className='mt-8 flex items-center'>
+                <div className='mr-4 capitalize text-gray-500'>Số lượng</div>
                 <QuantityController
                   onType={handleBuyCount}
                   onIncrease={handleBuyCount}
@@ -200,9 +218,9 @@ export default function ProductDetail() {
                 />
                 <div className='ml-6 text-sm text-gray-500'>{product.quantity} sản phẩm có sẵn</div>
               </div>
-              <div className='flex items-center mt-8'>
+              <div className='mt-8 flex items-center'>
                 <button
-                  className='flex items-center justify-center h-12 px-5 capitalize border rounded-sm shadow-sm border-orange bg-orange/10 text-orange hover:bg-orange/5'
+                  className='flex h-12 items-center justify-center rounded-sm border border-orange bg-orange/10 px-5 capitalize text-orange shadow-sm hover:bg-orange/5'
                   onClick={addToCart}
                 >
                   <svg
@@ -230,7 +248,10 @@ export default function ProductDetail() {
                   </svg>
                   Thêm vào giỏ hàng
                 </button>
-                <button className='fkex ml-4 h-12 min-w-[5rem] items-center justify-center rounded-sm bg-orange px-5 capitalize text-white shadow-sm outline-none hover:bg-orange/90'>
+                <button
+                  className='fkex ml-4 h-12 min-w-[5rem] items-center justify-center rounded-sm bg-orange px-5 capitalize text-white shadow-sm outline-none hover:bg-orange/90'
+                  onClick={buyNow}
+                >
                   Mua ngay
                 </button>
               </div>
@@ -240,9 +261,9 @@ export default function ProductDetail() {
       </div>
       <div className='mt-8'>
         <div className='container'>
-          <div className='p-4 mt-8 bg-white shadow'>
-            <div className='p-4 text-lg capitalize rounded bg-gray-50 text-slate-700'>Mô tả sản phẩm</div>
-            <div className='mx-4 mt-12 mb-4 text-sm leading-loose'>
+          <div className='mt-8 bg-white p-4 shadow'>
+            <div className='rounded bg-gray-50 p-4 text-lg capitalize text-slate-700'>Mô tả sản phẩm</div>
+            <div className='mx-4 mb-4 mt-12 text-sm leading-loose'>
               <div
                 dangerouslySetInnerHTML={{
                   __html: DOMPurify.sanitize(product.description)
@@ -254,9 +275,9 @@ export default function ProductDetail() {
       </div>
       <div className='mt-8'>
         <div className='container'>
-          <div className='text-gray-400 uppercase'>Có thể bạn cũng thích</div>
+          <div className='uppercase text-gray-400'>Có thể bạn cũng thích</div>
           {productsData && (
-            <div className='grid grid-cols-2 gap-3 mt-6 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6'>
+            <div className='mt-6 grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6'>
               {productsData.data.data.products.map((product) => (
                 <div className='col-span-1' key={product._id}>
                   <Product product={product} />
