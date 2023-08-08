@@ -10,7 +10,6 @@ import SortProductList from './components/SortProductList'
 
 const ProductList = () => {
   const queryConfig = useQueryConfig()
-  console.log('file: ProductList.tsx:13 ~ queryConfig:', queryConfig)
   const { data: productsData } = useQuery({
     queryKey: ['Products', queryConfig],
     queryFn: () => {

@@ -1,11 +1,11 @@
 import axios, { AxiosError, type AxiosInstance } from 'axios'
 import { toast } from 'react-toastify'
-import HttpStatusCode from 'src/constants/httpStatusCode.enum'
-import { AuthResponse } from 'src/types/auth.type'
-import { clearLS, getAccessTokenFromLS, setAccessTokenToLS, setProfileToLS } from './auth'
-import path from 'src/constants/path'
 import config from 'src/constants/config'
-class Http {
+import HttpStatusCode from 'src/constants/httpStatusCode.enum'
+import path from 'src/constants/path'
+import { AuthResponse } from 'src/types/auth.type'
+import { clearLS, getAccessTokenFromLS, navigateToNotFound, setAccessTokenToLS, setProfileToLS } from './auth'
+export class Http {
   instance: AxiosInstance
   private accessToken: string
   constructor() {
@@ -51,11 +51,20 @@ class Http {
 
           const message = data?.message || error.message
 
-          toast.error(message)
+          error.response?.status === HttpStatusCode.BadRequest
+            ? toast.error('Đường link không tồn tại', {
+                autoClose: 1000
+              })
+            : toast.error(message, {
+                autoClose: 1000
+              })
         }
 
         if (error.response?.status === HttpStatusCode.Unauthorized) {
           clearLS()
+        }
+        if (error.response?.status === HttpStatusCode.BadRequest) {
+          navigateToNotFound()
         }
         return Promise.reject(error)
       }

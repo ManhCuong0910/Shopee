@@ -1,23 +1,29 @@
-import { Fragment, useRef, useState } from 'react'
+import { Fragment, useRef } from 'react'
 import { toast } from 'react-toastify'
 import config from 'src/constants/config'
 
-export default function InputFile() {
-  const [file, setFile] = useState<File>()
+interface Props {
+  onChange?: (file?: File) => void
+}
+
+export default function InputFile({ onChange }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null)
+
   const onFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const fileFromLocal = event.target.files?.[0]
-    console.log(fileFromLocal)
-    if ((fileFromLocal && fileFromLocal.size >= config.maxSizeUploadAvatar) || !fileFromLocal?.type.includes('image')) {
-      toast.error('Dụng lượng file tối đa 1 MB. Định dạng:.JPEG, .PNG', {
+    fileInputRef.current?.setAttribute('value', '')
+    if (fileFromLocal && (fileFromLocal.size >= config.maxSizeUploadAvatar || !fileFromLocal.type.includes('image'))) {
+      toast.error(`Dụng lượng file tối đa 1 MB. Định dạng:.JPEG, .PNG`, {
         position: 'top-center'
       })
+    } else {
+      onChange && onChange(fileFromLocal)
     }
-    setFile(fileFromLocal)
   }
   const handleUpload = () => {
     fileInputRef.current?.click()
   }
+
   return (
     <Fragment>
       <input

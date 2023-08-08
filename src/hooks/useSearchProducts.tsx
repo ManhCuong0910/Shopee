@@ -1,5 +1,5 @@
 import { yupResolver } from '@hookform/resolvers/yup'
-import { omit } from 'lodash'
+import omit from 'lodash/omit'
 import { useForm } from 'react-hook-form'
 import useQueryConfig from './useQueryConfig'
 import { schema, Schema } from 'src/utils/rules'
@@ -13,7 +13,7 @@ const nameSchema = schema.pick(['name'])
 export default function useSearchProducts() {
   const queryConfig = useQueryConfig()
 
-  const { register, handleSubmit } = useForm<FormData>({
+  const { register, handleSubmit, reset } = useForm<FormData>({
     defaultValues: {
       name: ''
     },
@@ -28,16 +28,20 @@ export default function useSearchProducts() {
             ...queryConfig,
             name: data.name
           },
-          ['order', 'sort_by']
+          ['order', 'sort_by', 'category']
         )
-      : {
-          ...queryConfig,
-          name: data.name
-        }
+      : omit(
+          {
+            ...queryConfig,
+            name: data.name
+          },
+          ['category']
+        )
     navigate({
       pathname: path.home,
       search: createSearchParams(config).toString()
     })
+    reset({ name: '' })
   })
   return { onSubmitSearch, register }
 }

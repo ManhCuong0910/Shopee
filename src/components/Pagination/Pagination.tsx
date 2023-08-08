@@ -1,7 +1,7 @@
 import classNames from 'classnames'
 import { Link, createSearchParams } from 'react-router-dom'
 import path from 'src/constants/path'
-import { QueryConfig } from 'src/pages/ProductList/ProductList'
+import { QueryConfig } from 'src/hooks/useQueryConfig'
 
 interface Props {
   queryConfig: QueryConfig
@@ -17,7 +17,7 @@ export default function Pagination({ queryConfig, pageSize }: Props) {
       if (!dotBefore) {
         dotBefore = true
         return (
-          <span key={index} className='px-3 py-2 mx-2 bg-white border rounded shadow-sm'>
+          <span key={index} className='mx-2 rounded border bg-white px-3 py-2 shadow-sm'>
             ...
           </span>
         )
@@ -28,7 +28,7 @@ export default function Pagination({ queryConfig, pageSize }: Props) {
       if (!dotAfter) {
         dotAfter = true
         return (
-          <span key={index} className='px-3 py-2 mx-2 bg-white border rounded shadow-sm'>
+          <span key={index} className='mx-2 rounded border bg-white px-3 py-2 shadow-sm'>
             ...
           </span>
         )
@@ -72,9 +72,9 @@ export default function Pagination({ queryConfig, pageSize }: Props) {
       })
   }
   return (
-    <div className='flex flex-wrap justify-center mt-6'>
+    <div className='mt-6 flex flex-wrap justify-center'>
       {page === 1 ? (
-        <span className='px-3 py-2 mx-2 bg-white border rounded shadow-sm cursor-not-allowed'>Prev</span>
+        <span className='mx-2 cursor-not-allowed rounded border bg-white px-3 py-2 shadow-sm'>Prev</span>
       ) : (
         <Link
           to={{
@@ -84,7 +84,7 @@ export default function Pagination({ queryConfig, pageSize }: Props) {
               page: (page - 1).toString()
             }).toString()
           }}
-          className='px-3 py-2 mx-2 bg-white border rounded shadow-sm cursor-pointer'
+          className='mx-2 cursor-pointer rounded border bg-white px-3 py-2 shadow-sm'
         >
           Prev
         </Link>
@@ -92,7 +92,7 @@ export default function Pagination({ queryConfig, pageSize }: Props) {
 
       {renderPagination()}
       {page === pageSize ? (
-        <span className='px-3 py-2 mx-2 bg-white border rounded shadow-sm cursor-not-allowed'>Next</span>
+        <span className='mx-2 cursor-not-allowed rounded border bg-white px-3 py-2 shadow-sm'>Next</span>
       ) : (
         <Link
           to={{
@@ -102,7 +102,7 @@ export default function Pagination({ queryConfig, pageSize }: Props) {
               page: (page + 1).toString()
             }).toString()
           }}
-          className='px-3 py-2 mx-2 bg-white border rounded shadow-sm cursor-pointer'
+          className='mx-2 cursor-pointer rounded border bg-white px-3 py-2 shadow-sm'
         >
           Next
         </Link>

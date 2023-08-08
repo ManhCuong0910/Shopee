@@ -63,10 +63,6 @@ export default function ProductDetail() {
     const rect = event.currentTarget.getBoundingClientRect()
     const image = imageRef.current as HTMLImageElement
     const { naturalHeight, naturalWidth } = image
-    // Cách 1: Lấy offsetX, offsetY đơn giản khi chúng ta đã xử lý được bubble event
-    // const { offsetX, offsetY } = event.nativeEvent
-
-    // Cách 2: Lấy offsetX, offsetY khi chúng ta không xử lý được bubble event
     const offsetX = event.pageX - (rect.x + window.scrollX)
     const offsetY = event.pageY - (rect.y + window.scrollY)
 

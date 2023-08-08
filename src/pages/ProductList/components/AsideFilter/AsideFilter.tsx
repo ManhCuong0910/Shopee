@@ -1,6 +1,6 @@
 import { yupResolver } from '@hookform/resolvers/yup'
 import classNames from 'classnames'
-import { omit } from 'lodash'
+import omit from 'lodash/omit'
 import { Controller, useForm } from 'react-hook-form'
 import { Link, createSearchParams, useNavigate } from 'react-router-dom'
 import Button from 'src/components/Button'
@@ -27,7 +27,6 @@ export default function AsideFilter({ queryConfig, categories }: Props) {
 
   const {
     control,
-    watch,
     handleSubmit,
     trigger,
     formState: { errors }
@@ -65,7 +64,7 @@ export default function AsideFilter({ queryConfig, categories }: Props) {
           'text-orange': !category
         })}
       >
-        <svg viewBox='0 0 12 10' className='w-3 h-4 mr-3 fill-current'>
+        <svg viewBox='0 0 12 10' className='mr-3 h-4 w-3 fill-current'>
           <g fillRule='evenodd' stroke='none' strokeWidth={1}>
             <g transform='translate(-373 -208)'>
               <g transform='translate(155 191)'>
@@ -89,11 +88,16 @@ export default function AsideFilter({ queryConfig, categories }: Props) {
               <Link
                 to={{
                   pathname: path.home,
-                  search: createSearchParams({
-                    ...queryConfig,
-                    page: '1',
-                    category: categoryItem._id
-                  }).toString()
+                  search: createSearchParams(
+                    omit(
+                      {
+                        ...queryConfig,
+                        page: '1',
+                        category: categoryItem._id
+                      },
+                      ['name']
+                    )
+                  ).toString()
                 }}
                 className={classNames('relative px-2', {
                   'font-semibold text-orange': isActive
@@ -110,13 +114,13 @@ export default function AsideFilter({ queryConfig, categories }: Props) {
           )
         })}
       </ul>
-      <Link to={path.home} className='flex items-center mt-4 font-bold uppercase'>
+      <Link to={path.home} className='mt-4 flex items-center font-bold uppercase'>
         <svg
           enableBackground='new 0 0 15 15'
           viewBox='0 0 15 15'
           x={0}
           y={0}
-          className='w-3 h-4 mr-3 fill-current stroke-current'
+          className='mr-3 h-4 w-3 fill-current stroke-current'
         >
           <g>
             <polyline
@@ -176,7 +180,7 @@ export default function AsideFilter({ queryConfig, categories }: Props) {
             />
           </div>
           <div className='mt-1 min-h-[1.25rem] text-center text-sm text-red-600'>{errors.price_max?.message}</div>
-          <Button className='flex items-center justify-center w-full p-2 text-sm text-white uppercase bg-orange hover:bg-orange/80'>
+          <Button className='flex w-full items-center justify-center bg-orange p-2 text-sm uppercase text-white hover:bg-orange/80'>
             Áp dụng
           </Button>
         </form>
@@ -186,7 +190,7 @@ export default function AsideFilter({ queryConfig, categories }: Props) {
       <RatingStars queryConfig={queryConfig} />
       <div className='my-4 h-[1px] bg-gray-300' />
       <Button
-        className='flex items-center justify-center w-full p-2 text-sm text-white uppercase bg-orange hover:bg-orange/80'
+        className='flex w-full items-center justify-center bg-orange p-2 text-sm uppercase text-white hover:bg-orange/80'
         onClick={handleRemoveAll}
       >
         Xóa tất cả
