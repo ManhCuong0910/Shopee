@@ -23,8 +23,7 @@ export default function Login() {
     register,
     setError,
     handleSubmit,
-    formState: { errors },
-    watch
+    formState: { errors }
   } = useForm<FormData>({
     resolver: yupResolver(loginSchema)
   })
@@ -33,9 +32,9 @@ export default function Login() {
     mutationFn: (body: Omit<FormData, 'confirm_password'>) => authApi.login(body)
   })
   const onSubmit = handleSubmit((data) => {
-    console.log('data', data)
     loginMutation.mutate(data, {
       onSuccess: (data) => {
+        console.log(data)
         setIsAuthenticated(true)
         setProfile(data.data.data.user)
         navigate('/')
@@ -55,8 +54,6 @@ export default function Login() {
       }
     })
   })
-  const value = watch()
-  console.log(value, errors)
 
   return (
     <div className='bg-orange'>
