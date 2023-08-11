@@ -12,9 +12,12 @@ import purchaseApi from 'src/apis/purchase.api'
 import { purchasesStatus } from 'src/constants/purchase'
 import { toast } from 'react-toastify'
 import path from 'src/constants/path'
-
+import { useTranslation } from 'react-i18next'
+import { Helmet } from 'react-helmet-async'
+import { convert } from 'html-to-text'
 export default function ProductDetail() {
   const { nameId } = useParams()
+  const { t } = useTranslation('product')
   const queryClient = useQueryClient()
   const navigate = useNavigate()
   const [buyCount, setBuyCount] = useState(1)
@@ -117,6 +120,17 @@ export default function ProductDetail() {
   if (!product) return null
   return (
     <div className='bg-gray-200 py-6'>
+      <Helmet>
+        <title>{product.name} | Shopee Clone</title>
+        <meta
+          name='description'
+          content={convert(product.description, {
+            limits: {
+              maxInputLength: 150
+            }
+          })}
+        ></meta>
+      </Helmet>
       <div className='container'>
         <div className='bg-white p-4 shadow'>
           <div className='grid grid-cols-12 gap-9'>
@@ -193,7 +207,7 @@ export default function ProductDetail() {
                 <div className='mx-4 h-4 w-[1px] bg-gray-300'></div>
                 <div>
                   <span>{formatNumberToSocialStyle(product.sold)}</span>
-                  <span className='ml-1 text-gray-500'>Đã bán</span>
+                  <span className='ml-1 text-gray-500'>{t('productDetails.sold')}</span>
                 </div>
               </div>
               <div className='mt-8 flex items-center bg-gray-50 px-5 py-4'>
@@ -204,7 +218,7 @@ export default function ProductDetail() {
                 </div>
               </div>
               <div className='mt-8 flex items-center'>
-                <div className='mr-4 capitalize text-gray-500'>Số lượng</div>
+                <div className='mr-4 capitalize text-gray-500'>{t('productDetails.quantity')}</div>
                 <QuantityController
                   onType={handleBuyCount}
                   onIncrease={handleBuyCount}
@@ -212,7 +226,9 @@ export default function ProductDetail() {
                   max={product.quantity}
                   value={buyCount}
                 />
-                <div className='ml-6 text-sm text-gray-500'>{product.quantity} sản phẩm có sẵn</div>
+                <div className='text-capitalize ml-6 text-sm text-gray-500'>
+                  {product.quantity} {t('productDetails.available')}
+                </div>
               </div>
               <div className='mt-8 flex items-center'>
                 <button
@@ -242,13 +258,13 @@ export default function ProductDetail() {
                       <line fill='none' strokeLinecap='round' strokeMiterlimit={10} x1={9} x2={9} y1='8.5' y2='5.5' />
                     </g>
                   </svg>
-                  Thêm vào giỏ hàng
+                  {t('productDetails.addToCard')}
                 </button>
                 <button
                   className='fkex ml-4 h-12 min-w-[5rem] items-center justify-center rounded-sm bg-orange px-5 capitalize text-white shadow-sm outline-none hover:bg-orange/90'
                   onClick={buyNow}
                 >
-                  Mua ngay
+                  {t('productDetails.buyNow')}
                 </button>
               </div>
             </div>

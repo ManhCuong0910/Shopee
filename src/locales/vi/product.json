@@ -1,0 +1,9 @@
+{
+  "productDetails": {
+    "quantity": "Số Lượng",
+    "available": "Sản Phẩm Có Sẵn",
+    "addToCard": "Thêm Vào Giỏ Hàng",
+    "buyNow": "Mua Ngay",
+    "sold": "Đã Bán"
+  }
+}

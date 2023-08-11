@@ -1,0 +1,9 @@
+{
+  "productDetails": {
+    "quantity": "Quantity",
+    "available": "Available Products",
+    "addToCard": "Add To Card",
+    "buyNow": "Buy Now",
+    "sold": "Sold"
+  }
+}
